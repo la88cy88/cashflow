@@ -337,6 +337,49 @@ try {
     must(overflow <= 1, `${name} 无横向溢出（溢出 ${overflow}px）`);
   }
 
+  /* 8b. 小组件引导页：渲染、脚本载入、同步入口、iPhone 尺寸 */
+  const widgetEntry = await evaluate(
+    cdp,
+    `(() => {
+       const a = document.querySelector('a.list__row[href="./widget.html"]');
+       return a ? { found: true, color: getComputedStyle(a).color } : { found: false };
+     })()`
+  );
+  must(widgetEntry.found, '设置页存在小组件入口链接');
+  must(
+    widgetEntry.found && widgetEntry.color !== 'rgb(0, 0, 238)',
+    `入口链接已套用应用内配色：${widgetEntry.color || '—'}`
+  );
+
+  await cdp.send('Emulation.setDeviceMetricsOverride', {
+    width: 390,
+    height: 844,
+    deviceScaleFactor: 2,
+    mobile: true
+  });
+  await cdp.send('Page.navigate', { url: `${BASE.replace(/\/$/, '')}/widget.html` });
+  await sleep(1600);
+  const widgetTitle = await evaluate(cdp, `document.title`);
+  must(widgetTitle.includes('小组件'), `小组件页标题：${widgetTitle}`);
+  const widgetAmount = await evaluate(cdp, `document.getElementById('wpAmount').textContent`);
+  must(/^¥\d+\.\d{2}$/.test(widgetAmount), `小组件页读到今日计划：${widgetAmount}`);
+  const widgetMeta = await evaluate(cdp, `document.getElementById('wpMeta').textContent`);
+  must(/\d{4}-\d{2}-\d{2}/.test(widgetMeta), `小组件页显示日期与班次：${widgetMeta.slice(0, 46)}`);
+  const scriptLen = await evaluate(cdp, `document.getElementById('wpScript').value.length`);
+  must(scriptLen > 10000, `Scriptable 脚本已载入页面（${scriptLen} 字符）`);
+  const syncButtons = await evaluate(
+    cdp,
+    `Boolean(document.getElementById('wpSync') && document.getElementById('wpCopyScript') && document.getElementById('wpCopyCode'))`
+  );
+  must(syncButtons, '复制脚本 / 同步 / 复制同步码按钮齐全');
+  const widgetShot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
+  await writeFile(join(SHOT_DIR, 'widget-390.png'), Buffer.from(widgetShot.data, 'base64'));
+  const widgetOverflow = await evaluate(
+    cdp,
+    `document.documentElement.scrollWidth - document.documentElement.clientWidth`
+  );
+  must(widgetOverflow <= 1, `小组件页无横向溢出（溢出 ${widgetOverflow}px）`);
+
   must(runtimeErrors.length === 0, `运行期无 JS 异常${runtimeErrors.length ? `：${runtimeErrors.join(' | ').slice(0, 300)}` : ''}`);
 
   /* 9. 断网后仍能从 Service Worker 缓存打开并计算（先回到干净导航状态） */

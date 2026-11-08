@@ -41,7 +41,7 @@ jobs:
       - name: Assemble site bundle
         run: |
           mkdir -p _site
-          cp -R index.html manifest.webmanifest sw.js css js icons _site/
+          cp -R index.html widget.html manifest.webmanifest sw.js css js icons widget _site/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

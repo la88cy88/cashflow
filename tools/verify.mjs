@@ -67,8 +67,9 @@ for (const file of textFiles) {
 }
 console.log(`✓ 敏感信息扫描：${textFiles.length} 个文本文件，6 类凭据模式`);
 
-/* 2. 无外部网络依赖 */
-const EXTERNAL = /(?:src|href|url)\s*[=(]\s*['"]?https?:\/\/[^'")\s]+/gi;
+/* 2. 无外部网络依赖：只检查真正的资源引用（src/href 属性、CSS url()）。
+      变量赋值里的导航地址（如 PWA_URL）不算资源依赖，不在此列。 */
+const EXTERNAL = /(?:src|href)\s*=\s*['"]?https?:\/\/[^'")\s]+|url\(\s*['"]?https?:\/\/[^'")\s]+/gi;
 for (const file of textFiles) {
   if (file.endsWith('README.md') || file.includes('/tests/') || file.includes('/tools/')) continue;
   const content = await readFile(file, 'utf8');
@@ -146,6 +147,25 @@ const app = await readFile(join(ROOT, 'js/app.js'), 'utf8');
 check(/requestAnimationFrame/.test(app), '主循环必须使用 requestAnimationFrame');
 check(/visibilitychange/.test(app) && /pageshow/.test(app), '必须监听前后台恢复事件');
 console.log('✓ 计算约束：真实时间源 / rAF / 后台恢复 / 金额上限');
+
+/* 8. 小组件引导页的 DOM 引用与本地资源 */
+const widgetHtml = await readFile(join(ROOT, 'widget.html'), 'utf8');
+const widgetIds = new Set([...widgetHtml.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]));
+const widgetPageJs = await readFile(join(ROOT, 'js', 'widget-page.js'), 'utf8');
+const widgetRefs = new Set(
+  [...widgetPageJs.matchAll(/(?:\$|getElementById)\(\s*'([^']+)'\s*\)/g)].map((m) => m[1])
+);
+for (const id of widgetRefs) {
+  check(widgetIds.has(id), `widget-page.js 引用了不存在的 DOM id: #${id}`);
+}
+for (const page of ['index.html', 'widget.html']) {
+  const src = await readFile(join(ROOT, page), 'utf8');
+  for (const m of src.matchAll(/(?:href|src)="(\.\/[^"]+)"/g)) {
+    check(await exists(join(ROOT, m[1].slice(2))), `${page} 引用缺失：${m[1]}`);
+  }
+}
+check(await exists(join(ROOT, 'widget', 'CashflowWidget.js')), 'Scriptable 小组件脚本缺失');
+console.log(`✓ 小组件页面：${widgetRefs.size} 个 id / 两个页面的本地资源`);
 
 /* ---------- 汇总 ---------- */
 console.log('');

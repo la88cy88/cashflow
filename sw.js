@@ -4,18 +4,21 @@
  * 版本号变化时自动清理旧缓存；前端发现新版本后提示用户刷新。
  */
 
-const VERSION = 'v1.0.0';
+const VERSION = 'v1.1.0';
 const CACHE_PREFIX = 'dagongren-cashflow-';
 const CACHE_NAME = CACHE_PREFIX + VERSION;
 
 const SHELL = [
   './',
   './index.html',
+  './widget.html',
+  './widget/CashflowWidget.js',
   './manifest.webmanifest',
   './css/theme.css',
   './css/base.css',
   './css/components.css',
   './js/app.js',
+  './js/widget-page.js',
   './js/engine.js',
   './js/time.js',
   './js/store.js',

@@ -1,6 +1,6 @@
 {
   "name": "dagongren-cashflow",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "description": "打工人现金流 · 实时工资进度可视化 PWA",

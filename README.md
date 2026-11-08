@@ -27,6 +27,7 @@
 - 随机激励语、浅色 / 深色 / 跟随系统主题
 - 最近 7 天数据概览、JSON 导出备份与恢复、清空数据
 - PWA：离线可用、添加到 iPhone 主屏幕、桌面浏览器可用
+- iPhone 主屏幕 / 锁屏小组件（Scriptable，支持 iOS 16–27，含锁屏矩形 / 圆形 / 内联）
 
 ## 本地运行
 
@@ -34,7 +35,7 @@
 
 ```bash
 npm start          # 启动 http://localhost:4173
-npm test           # 36 项单元 / 边界测试
+npm test           # 48 项单元 / 边界测试（含小组件）
 npm run verify     # 语法、DOM 引用、PWA 资源、敏感信息扫描
 npm run smoke      # 真实 Chrome 端到端测试 + iPhone 尺寸截图
 npm run icons      # 重新生成 PWA 图标（仅需 Python 3）
@@ -51,6 +52,36 @@ npm run icons      # 重新生成 PWA 图标（仅需 Python 3）
 5. 从主屏幕图标打开：全屏无地址栏，支持离线使用。
 
 > ⚠️ iOS 上「主屏 Web App」与 Safari 的本地存储是相互独立的空间。首次从主屏打开时，按自己的计划重新设置一次即可；之后数据会稳定保留在这个 App 内。换机或清缓存前，建议用「概览 → 导出备份文件」保存一份 JSON。
+
+## 桌面与锁屏小组件
+
+网页本身无法直接提供 iOS 系统小组件——桌面小组件、锁屏小组件和灵动岛都属于原生 `WidgetKit` / `ActivityKit`，必须用 Swift 编译成 App 扩展。因此这里走一条**不用电脑、不用开发者账号、不用签名**的路线：免费 App **Scriptable** 用 JavaScript 画小组件，脚本内置一份与网页版逐字段对齐的计算引擎。
+
+打开 PWA → 设置 → **「小组件设置与安装」**，页面里可以一键复制脚本、下载 `.js`、同步今日计划。也可以直接访问 `widget.html`。
+
+**安装（一次性）**
+
+1. App Store 搜索安装 **Scriptable**（免费、无需登录）。
+2. 在小组件页点「复制脚本」→ Scriptable 右上角 `+` 新建 → 全选粘贴。
+3. 在脚本设置里把它命名为 **`现金流`**（名字要和页面上的「脚本名」输入框一致，否则同步链接找不到脚本）。
+4. **主屏幕**：长按空白处 → 左上角 `+` → Scriptable → 选小 / 中 / 大 → 添加小组件 → 长按编辑，脚本选「现金流」。
+5. **锁定屏幕**：锁屏长按 → 「自定」→ 点时钟下方小组件区 → Scriptable → 选矩形（金额 + 进度条）、圆形（百分比 + 金额）或内联（一行字）→ 编辑里同样指定脚本。
+
+**日常使用**：在网页版改完工资或上下班时间，回到小组件页点「**同步到小组件**」。iOS 会询问是否在 Scriptable 中打开，允许后脚本把计划存进自己的文档目录。跳转没反应时，用「复制同步码」+ 在 Scriptable 里运行脚本选「从剪贴板导入同步码」。不带网页也能用：直接在 Scriptable 里运行脚本，会弹出今日计划编辑器。
+
+脚本支持的尺寸：主屏 `small / medium / large / extraLarge`，锁屏 `accessoryRectangular / accessoryCircular / accessoryInline`（iOS 16 起，iOS 27 同样支持）。大尺寸会显示时薪、每分钟 / 每秒收入与班次；桌面尺寸还带一个由系统持续更新的「距下班」计时器。
+
+**iOS 27**：锁屏可切「紧凑时钟」腾出完整一行给小组件，主屏新增整页超大尺寸（脚本按大尺寸布局渲染）。液态玻璃模式下锁屏小组件的颜色由系统统一着色，属正常现象。
+
+**必须知道的三个限制**
+
+| 限制 | 说明 |
+| --- | --- |
+| 数字不会每帧跳动 | 小组件刷新由 iOS 按电量 / 使用频率调度（通常几分钟）。脚本请求 1 分钟刷新但不保证；**每次刷新都按 `Date.now()` 重算，金额始终精确**，小组件上也标注了「更新于 HH:MM:SS」。点一下小组件即回到网页版看连续跳动的数字。 |
+| 两份计划各自保存 | 网页版在 LocalStorage，小组件在 Scriptable 文档目录，iOS 不允许互通。改完计划记得同步一次；同步码只在本机通过 URL scheme / 剪贴板传递，不联网。 |
+| 锁屏持续跳动需原生 | 真正的逐秒更新要做 **实时活动 / 灵动岛**（`ActivityKit`），需要 Mac + Xcode + Apple 开发者账号。本项目是纯静态 PWA，不含原生 App；本机没有安装 Xcode，因此没有提供未经验证可编译的工程。 |
+
+> 脚本文件：`widget/CashflowWidget.js`（单文件自包含，无网络请求、无第三方库）。改了计算规则请同步改 `js/engine.js`，`tests/widget.test.mjs` 会逐字段比对两边结果，防止算歪。
 
 ## 修改今日工资和上下班时间
 
@@ -97,8 +128,11 @@ npm run icons      # 重新生成 PWA 图标（仅需 Python 3）
 ```
 .
 ├── index.html                    单页骨架（首页 / 概览 / 设置）
+├── widget.html                   桌面 / 锁屏小组件安装与同步引导页
 ├── manifest.webmanifest          PWA 清单
 ├── sw.js                         Service Worker（离线缓存、版本更新）
+├── widget/
+│   └── CashflowWidget.js         ★ Scriptable 小组件（自包含计算引擎，6 种尺寸）
 ├── css/
 │   ├── theme.css                 浅色 / 深色设计令牌
 │   ├── base.css                  reset、布局、标签栏
@@ -111,9 +145,10 @@ npm run icons      # 重新生成 PWA 图标（仅需 Python 3）
 │   ├── effects.js                里程碑 / 庆祝动画
 │   ├── quotes.js                 激励语
 │   ├── ui.js                     DOM 渲染与交互控件
-│   └── app.js                    状态编排、rAF 循环、事件、PWA 注册
+│   ├── app.js                    状态编排、rAF 循环、事件、PWA 注册
+│   └── widget-page.js            小组件引导页：读计划、复制脚本、生成同步码
 ├── icons/                        PWA / iOS 主屏图标
-├── tests/                        node:test 单元与边界测试
+├── tests/                        node:test 单元与边界测试（含 widget.test.mjs）
 └── tools/
     ├── serve.mjs                 零依赖本地静态服务器
     ├── verify.mjs                静态质量与安全校验
@@ -138,6 +173,7 @@ LocalStorage 键（命名空间 `dgr:v1:`）：
 - 页面通过 CSP 限制资源只能来自本站，禁止外链脚本与对象嵌入。
 - 超过 400 天的历史计划会在新的一天自动清理，避免存储无限增长。
 - 备份文件是纯 JSON，可用文本编辑器查看，不含任何凭据。
+- Scriptable 小组件另存一份 `cashflow-widget-state.json` 在自己的文档目录；同步码只包含日期、工资和上下班时间，通过本机 URL scheme / 剪贴板传递，脚本不发起任何网络请求。
 
 ## 部署与后续维护
 
@@ -155,7 +191,7 @@ git push origin main
 
 **切换到 GitHub Actions 发布（可选）**
 
-仓库的 `tools/deploy-pages.yml.example` 保留了完整的 GitHub Actions 部署配置（只打包 `index.html`、`manifest.webmanifest`、`sw.js`、`css/`、`js/`、`icons/`）。切换步骤：
+仓库的 `tools/deploy-pages.yml.example` 保留了完整的 GitHub Actions 部署配置（只打包 `index.html`、`widget.html`、`manifest.webmanifest`、`sw.js`、`css/`、`js/`、`icons/`、`widget/`）。切换步骤：
 
 1. 把该文件移动到 `.github/workflows/deploy.yml`；
 2. 仓库 Settings → Pages → Build and deployment → Source 选 **GitHub Actions**；
@@ -163,15 +199,17 @@ git push origin main
 
 > 初次部署使用的访问令牌只有 `repo` 权限、缺少 `workflow` 权限。GitHub 按目录路径检查：只要是 `.github/workflows/` 下的文件（连 `.example` 后缀也一样），缺少 `workflow` 权限的令牌都会推送失败。因此配置暂存在 `tools/` 下、站点改用等效的分支发布。两种方式产出的线上站点完全一致，分支发布对纯静态站点还少一步构建。
 
-**改了静态资源时**：同时把 `sw.js` 顶部的 `VERSION` 递增（例如 `v1.0.1`），否则用户端可能仍用旧缓存。前端检测到新版本会显示「有新版本可用 → 刷新」提示条，点一下即可切换。
+**改了静态资源时**：同时把 `sw.js` 顶部的 `VERSION` 递增（例如 `v1.1.1`），否则用户端可能仍用旧缓存。前端检测到新版本会显示「有新版本可用 → 刷新」提示条，点一下即可切换。
 
 **改了图标时**：`npm run icons` 重新生成 PNG，然后提交 `icons/`。
 
 ## 测试
 
-`npm test` 覆盖 36 项：上班前后、下班后、毫秒精度、幂等性、刷新恢复、金额上限、午休暂停、跨午夜班次、跨日午休、改工资 / 改时间、零时长与非法输入、午休越界、速率自洽、里程碑、格式化、时区变化、日期加减与闰年、按日期隔离、跨天归属、备份往返等。
+`npm test` 覆盖 48 项：上班前后、下班后、毫秒精度、幂等性、刷新恢复、金额上限、午休暂停、跨午夜班次、跨日午休、改工资 / 改时间、零时长与非法输入、午休越界、速率自洽、里程碑、格式化、时区变化、日期加减与闰年、按日期隔离、跨天归属、备份往返等。其中 `tests/widget.test.mjs` 用 `node:vm` 模拟整套 Scriptable 运行环境，真实执行小组件脚本，逐字段比对它与 `js/engine.js` 在 14 个时间边界上的结果，并验证 7 种尺寸渲染、同步码解析、状态清洗与入口调用。
 
-`npm run smoke` 在无头 Chrome 里验证真实交互（编辑 / 保存 / 二次确认 / 刷新恢复 / 主题 / 动画 / 标签切换），并对 320 / 390 / 430 / 1280 四种宽度截图检查横向溢出，截图输出到 `/tmp/wb-cashflow-shots`。
+`npm run verify` 做 495 项静态检查：6 类凭据扫描、无外部资源、全部 JS 语法、DOM / `ui.els` 引用完整性、两个页面的本地资源、SW 预缓存清单与计算约束。
+
+`npm run smoke` 在无头 Chrome 里验证真实交互（编辑 / 保存 / 二次确认 / 刷新恢复 / 主题 / 动画 / 标签切换 / 小组件引导页 / 断网离线），并对 320 / 390 / 430 / 1280 四种宽度截图检查横向溢出，截图输出到 `/tmp/wb-cashflow-shots`。设置 `SMOKE_URL=https://la88cy88.github.io/cashflow/` 可直接对线上站点跑同一套检查。
 
 ## 常见问题
 
@@ -182,6 +220,12 @@ git push origin main
 **Q：换手机怎么迁移？** 旧设备「概览 → 导出备份文件」，新设备「概览 → 从备份恢复」。
 
 **Q：为什么主屏 App 里的数据和 Safari 不一样？** iOS 把两者当作独立存储区，这是系统行为。选定一个入口长期使用即可。
+
+**Q：小组件上的数字怎么不一直跳？** iOS 按电量和使用频率调度刷新，第三方小组件做不到逐帧更新；每次刷新都是按真实时间重算的精确值，页面上有「更新于」时间戳。点小组件回到网页版就是连续跳动的版本。
+
+**Q：改了工资，小组件没变？** 需要回小组件页点一次「同步到小组件」（或复制同步码后在 Scriptable 里导入）。iOS 不允许网页直接写 Scriptable 的存储空间。
+
+**Q：iOS 27 能用吗？** 可以。锁屏 accessory 小组件从 iOS 16 起支持，iOS 27 继续可用；紧凑时钟、整页超大尺寸、液态玻璃着色都是系统层面的表现，脚本已按尺寸做了布局适配。
 
 ## 部署地址
 

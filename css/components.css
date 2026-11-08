@@ -1088,6 +1088,16 @@
   }
 }
 
+/* 以链接形式复用的列表行 / 按钮 */
+a.list__row {
+  color: inherit;
+  text-decoration: none;
+}
+
+a.btn {
+  text-decoration: none;
+}
+
 /* 桌面端把底部弹层收进「手机画布」里 */
 @media (min-width: 620px) {
   .sheet {
