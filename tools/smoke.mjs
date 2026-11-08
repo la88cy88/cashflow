@@ -17,10 +17,11 @@ import { fileURLToPath } from 'node:url';
 import { setTimeout as sleep } from 'node:timers/promises';
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
-const SHOT_DIR = '/tmp/wb-cashflow-shots';
+const LIVE = Boolean(process.env.SMOKE_URL);
+const SHOT_DIR = LIVE ? '/tmp/wb-cashflow-live-shots' : '/tmp/wb-cashflow-shots';
 const SERVER_PORT = 4173;
 const CDP_PORT = 9333;
-const BASE = `http://127.0.0.1:${SERVER_PORT}`;
+const BASE = process.env.SMOKE_URL || `http://127.0.0.1:${SERVER_PORT}`;
 
 const CHROME = [
   process.env.CHROME_PATH,
@@ -135,11 +136,13 @@ try {
   await mkdir(SHOT_DIR, { recursive: true });
   profile = await mkdtemp(join(tmpdir(), 'wb-cashflow-chrome-'));
 
-  server = spawn(process.execPath, ['tools/serve.mjs'], {
-    cwd: ROOT,
-    stdio: 'ignore',
-    env: { ...process.env, PORT: String(SERVER_PORT) }
-  });
+  if (!LIVE) {
+    server = spawn(process.execPath, ['tools/serve.mjs'], {
+      cwd: ROOT,
+      stdio: 'ignore',
+      env: { ...process.env, PORT: String(SERVER_PORT) }
+    });
+  }
   chrome = spawn(
     CHROME,
     [
@@ -158,7 +161,7 @@ try {
     { stdio: 'ignore' }
   );
 
-  await waitForServer();
+  if (server) await waitForServer();
   const wsUrl = await waitForTarget();
   const ws = await new Promise((resolve, reject) => {
     const socket = new WebSocket(wsUrl);
@@ -199,6 +202,15 @@ try {
   must(statusLabel.length > 0, `工作状态显示：${statusLabel}`);
   const clock = await evaluate(cdp, `document.getElementById('heroClock').textContent`);
   must(/^\d{2}:\d{2}:\d{2}$/.test(clock), `当前时间显示：${clock}`);
+  const swStatus = await evaluate(
+    cdp,
+    `navigator.serviceWorker
+      ? navigator.serviceWorker.getRegistration('./').then((r) =>
+          r ? (r.active ? 'active' : r.installing ? 'installing' : 'waiting') : 'none'
+        )
+      : 'unsupported'`
+  );
+  must(['active', 'installing', 'waiting'].includes(swStatus), `Service Worker 已注册：${swStatus}`);
 
   /* 2. 打开计划面板、填写并保存 */
   await evaluate(cdp, `document.getElementById('btnEditPlan').click()`);
@@ -326,6 +338,44 @@ try {
   }
 
   must(runtimeErrors.length === 0, `运行期无 JS 异常${runtimeErrors.length ? `：${runtimeErrors.join(' | ').slice(0, 300)}` : ''}`);
+
+  /* 9. 断网后仍能从 Service Worker 缓存打开并计算（先回到干净导航状态） */
+  await cdp.send('Page.navigate', { url: BASE });
+  await sleep(2500);
+  let swReady = false;
+  for (let i = 0; i < 20; i += 1) {
+    const state = await evaluate(
+      cdp,
+      `navigator.serviceWorker.getRegistration('./').then((r) =>
+        r && r.active && navigator.serviceWorker.controller ? 'ready' : 'pending'
+      )`
+    );
+    if (state === 'ready') {
+      swReady = true;
+      break;
+    }
+    await sleep(400);
+  }
+  must(swReady, 'Service Worker 已接管页面（具备离线能力）');
+  if (swReady) {
+    await cdp.send('Network.enable');
+    await cdp.send('Network.emulateNetworkConditions', {
+      offline: true,
+      latency: 0,
+      downloadThroughput: 0,
+      uploadThroughput: 0
+    });
+    await cdp.send('Page.reload', { ignoreCache: false });
+    await sleep(1800);
+    const offlineText = await evaluate(cdp, `document.getElementById('amountRoot').textContent`);
+    must(/^¥\d+\.\d{6}$/.test(offlineText), `断网后仍可打开并实时计算：${offlineText}`);
+    await cdp.send('Network.emulateNetworkConditions', {
+      offline: false,
+      latency: 0,
+      downloadThroughput: -1,
+      uploadThroughput: -1
+    });
+  }
 
   ws.close();
 } catch (error) {
