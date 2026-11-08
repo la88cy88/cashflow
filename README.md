@@ -114,13 +114,12 @@ npm run icons      # 重新生成 PWA 图标（仅需 Python 3）
 │   └── app.js                    状态编排、rAF 循环、事件、PWA 注册
 ├── icons/                        PWA / iOS 主屏图标
 ├── tests/                        node:test 单元与边界测试
-├── tools/
-│   ├── serve.mjs                 零依赖本地静态服务器
-│   ├── verify.mjs                静态质量与安全校验
-│   ├── smoke.mjs                 真实浏览器端到端测试
-│   └── make-icons.py             标准库生成 PNG 图标
-└── .github/workflows/
-    └── deploy.yml.example        GitHub Actions 部署配置（可选，见部署章节）
+└── tools/
+    ├── serve.mjs                 零依赖本地静态服务器
+    ├── verify.mjs                静态质量与安全校验
+    ├── smoke.mjs                 真实浏览器端到端测试
+    ├── make-icons.py             标准库生成 PNG 图标
+    └── deploy-pages.yml.example  GitHub Actions 部署配置（可选）
 ```
 
 新增功能时建议：计算规则只改 `engine.js` 并同步补 `tests/engine.test.mjs`；界面只改 `ui.js` / `components.css`；存储结构变更在 `store.js` 里做兼容读取。
@@ -156,13 +155,13 @@ git push origin main
 
 **切换到 GitHub Actions 发布（可选）**
 
-仓库里保留了完整的 `.github/workflows/deploy.yml.example`。它只打包站点运行所需文件（`index.html`、`manifest.webmanifest`、`sw.js`、`css/`、`js/`、`icons/`）。切换步骤：
+仓库的 `tools/deploy-pages.yml.example` 保留了完整的 GitHub Actions 部署配置（只打包 `index.html`、`manifest.webmanifest`、`sw.js`、`css/`、`js/`、`icons/`）。切换步骤：
 
-1. 把该文件重命名为 `deploy.yml`；
+1. 把该文件移动到 `.github/workflows/deploy.yml`；
 2. 仓库 Settings → Pages → Build and deployment → Source 选 **GitHub Actions**；
 3. 推送。
 
-> 初次部署使用的访问令牌只有 `repo` 权限、缺少 `workflow` 权限。GitHub 规定没有 `workflow` 权限的令牌不能创建或更新 `.github/workflows/*.yml`，因此工作流先以 `.example` 形式保留、站点改用等效的分支发布。两种方式产出的线上站点完全一致，分支发布对纯静态站点还少一步构建。
+> 初次部署使用的访问令牌只有 `repo` 权限、缺少 `workflow` 权限。GitHub 按目录路径检查：只要是 `.github/workflows/` 下的文件（连 `.example` 后缀也一样），缺少 `workflow` 权限的令牌都会推送失败。因此配置暂存在 `tools/` 下、站点改用等效的分支发布。两种方式产出的线上站点完全一致，分支发布对纯静态站点还少一步构建。
 
 **改了静态资源时**：同时把 `sw.js` 顶部的 `VERSION` 递增（例如 `v1.0.1`），否则用户端可能仍用旧缓存。前端检测到新版本会显示「有新版本可用 → 刷新」提示条，点一下即可切换。
 

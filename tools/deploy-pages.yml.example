@@ -2,11 +2,12 @@
 #
 # 当前站点使用 GitHub Pages 的「分支发布」（main 根目录），推送即生效。
 # 如需切换到 Actions 发布：
-#   1. 把本文件重命名为 deploy.yml
+#   1. 把本文件移动到 .github/workflows/deploy.yml
 #   2. 仓库 Settings → Pages → Build and deployment → Source 选 GitHub Actions
 #   3. 推送
-# 注意：推送 .github/workflows/*.yml 需要凭据具备 workflow 权限；
-#       仅有 repo 权限的令牌会被 GitHub 拒绝，所以这里先以 .example 保留。
+# 注意：GitHub 按目录路径检查权限 —— 只要是 .github/workflows/ 下的文件
+#       （连 .example 后缀也一样），缺少 workflow 权限的令牌都会推送失败。
+#       所以配置暂时放在 tools/ 下保留，站点先用等效的分支发布。
 
 name: Deploy to GitHub Pages
 
