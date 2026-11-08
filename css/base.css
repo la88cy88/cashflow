@@ -1,0 +1,268 @@
+/* 基础重置 + 布局骨架：移动端优先，桌面端居中成一张「手机画布」 */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+[hidden],
+.is-hidden {
+  display: none !important;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: 0;
+  background: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+.svg-sprite {
+  display: none;
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.app-shell {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  min-height: 100dvh;
+  margin: 0 auto;
+}
+
+.app-main {
+  padding: 0 18px calc(104px + env(safe-area-inset-bottom));
+}
+
+.view {
+  animation: viewIn 0.34s cubic-bezier(0.22, 0.9, 0.3, 1) both;
+}
+
+@keyframes viewIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------- 首页顶部 ---------- */
+
+.topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: calc(18px + env(safe-area-inset-top));
+  padding-bottom: 18px;
+}
+
+.topbar__date {
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.topbar__week {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.topbar__right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar__clock {
+  font-family: var(--font-num);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  padding-top: 4px;
+}
+
+/* ---------- 二级页面 ---------- */
+
+.view-header {
+  padding-top: calc(28px + env(safe-area-inset-top));
+  padding-bottom: 22px;
+}
+
+.view-header h1 {
+  font-size: 30px;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+}
+
+.view-header p {
+  margin-top: 4px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.section-block {
+  margin-top: 26px;
+}
+
+.section-title {
+  margin: 0 0 10px 4px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+/* ---------- 底部标签栏 ---------- */
+
+.tabbar {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  width: min(100%, 480px);
+  padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+  background: var(--tabbar-bg);
+  border-top: 1px solid var(--separator);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: blur(22px) saturate(180%);
+}
+
+.tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 5px 0 3px;
+  color: var(--text-tertiary);
+  font-size: 10.5px;
+  font-weight: 600;
+  transition: color 0.18s ease;
+}
+
+.tab .icon {
+  width: 23px;
+  height: 23px;
+  stroke-width: 1.7;
+}
+
+.tab.is-active {
+  color: var(--green);
+}
+
+.tab:active {
+  opacity: 0.6;
+}
+
+/* ---------- 桌面端 ---------- */
+
+@media (min-width: 620px) {
+  body {
+    background: radial-gradient(circle at 50% 0%, rgba(14, 159, 110, 0.07), transparent 60%), var(--bg);
+  }
+
+  .app-shell {
+    margin-top: 28px;
+    margin-bottom: 28px;
+    min-height: calc(100dvh - 56px);
+    border-radius: 34px;
+    box-shadow: var(--shadow-float);
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  .tabbar {
+    bottom: 28px;
+    border-radius: 0 0 34px 34px;
+  }
+
+  .sheet {
+    border-radius: 26px;
+    bottom: 28px;
+  }
+}
+
+/* 移动端使用叠加式滚动条，隐藏占位滚动条让画面更干净 */
+@media (max-width: 619px) {
+  html {
+    scrollbar-width: none;
+  }
+
+  html::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

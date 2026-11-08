@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="打工人现金流">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#10b981"/>
+      <stop offset="1" stop-color="#067a5c"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe08a"/>
+      <stop offset="1" stop-color="#e8a326"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <g fill="#fff" opacity="0.95">
+    <rect x="104" y="292" width="69" height="112" rx="15"/>
+    <rect x="212" y="225" width="69" height="179" rx="15"/>
+    <rect x="320" y="164" width="69" height="240" rx="15"/>
+  </g>
+  <circle cx="348" cy="138" r="79" fill="url(#gold)"/>
+  <g stroke="#7a4e00" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M320 105 348 135 376 105"/>
+    <path d="M348 135v41"/>
+    <path d="M320 144h56M320 159h56"/>
+  </g>
+</svg>

@@ -1,0 +1,30 @@
+# macOS / 编辑器
+.DS_Store
+.AppleDouble
+*.swp
+.idea/
+.vscode/
+
+# WorkBuddy 工作区内部数据（不推送到公开仓库）
+.workbuddy/
+
+# 依赖与构建产物
+node_modules/
+dist/
+build/
+coverage/
+
+# 日志与本地环境变量（凭据绝不入库）
+*.log
+.env
+.env.*
+!.env.example
+*.local
+*.pem
+*.key
+*_secret*
+*credential*
+
+# 临时文件
+tmp/
+.tmp/

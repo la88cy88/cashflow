@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
+    />
+    <meta name="color-scheme" content="light dark" />
+    <title>打工人现金流</title>
+    <meta name="description" content="把时间变成看得见的钱。实时显示今日工资增长的个人 PWA 工具，数据全部保存在本机。" />
+    <meta name="theme-color" content="#f2f3f7" id="metaThemeColor" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="现金流" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self' blob:; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; manifest-src 'self'; connect-src 'self'; font-src 'self'; base-uri 'self'; form-action 'none'; object-src 'none'"
+    />
+
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+    <link rel="icon" type="image/svg+xml" href="./icons/icon.svg" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
+
+    <link rel="stylesheet" href="./css/theme.css" />
+    <link rel="stylesheet" href="./css/base.css" />
+    <link rel="stylesheet" href="./css/components.css" />
+  </head>
+
+  <body>
+    <!-- 图标精灵：全部内联，不发起任何外部请求 -->
+    <svg class="svg-sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+      <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.6 12 3l9 7.6V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" /></symbol>
+      <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V11m5.3 9V4m5.4 16v-7m5.3 7V8" /></symbol>
+      <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h9m4 0h3M4 17h3m4 0h9" /><circle cx="15.5" cy="7" r="2" /><circle cx="9.5" cy="17" r="2" /></symbol>
+      <symbol id="i-edit" viewBox="0 0 24 24"><path d="m4 20 4.2-1 10-10-3.2-3.2-10 10z" /><path d="m13.8 6.9 3.3 3.3" /></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" /></symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 6.2M20 5v6h-6" /></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 19h16" /></symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 21V9m0 0 4 4m-4-4L8 13M4 5h16" /></symbol>
+      <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6" /></symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" /></symbol>
+      <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7.4h.01" /></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 13 4.5 4.5L19 7" /></symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v6m4-6v6" /></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 7v5.4l3.4 2" /></symbol>
+      <symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M9 8.5 12 12l3-3.5M12 12v5M9.3 13h5.4M9.3 15.5h5.4" /></symbol>
+    </svg>
+
+    <div class="app-shell">
+      <main class="app-main">
+        <!-- ==================== 首页 ==================== -->
+        <section class="view is-active" id="view-home" aria-label="今日实时工资">
+          <header class="topbar">
+            <div class="topbar__date-group">
+              <div class="topbar__date" id="heroDate">—</div>
+              <div class="topbar__week" id="heroWeek">—</div>
+            </div>
+            <div class="topbar__right">
+              <div class="topbar__clock" id="heroClock">--:--:--</div>
+              <button class="icon-btn" id="btnQuickSettings" type="button" aria-label="打开今日计划设置">
+                <svg class="icon"><use href="#i-sliders" /></svg>
+              </button>
+            </div>
+          </header>
+
+          <div class="crossday-banner is-hidden" id="crossdayBanner">
+            <svg class="icon"><use href="#i-clock" /></svg>
+            <span id="crossdayText">跨日班次进行中</span>
+          </div>
+
+          <section class="card hero" aria-labelledby="amountRoot">
+            <div class="hero__top">
+              <span class="status-pill" id="statusPill" data-status="before">
+                <span class="status-pill__dot"></span>
+                <span id="statusLabel">准备上班</span>
+              </span>
+              <span class="hero__caption">今日累计收入</span>
+            </div>
+
+            <div class="hero__amount-wrap">
+              <div class="hero__amount" id="amountRoot" role="img" aria-label="¥0.000000"></div>
+            </div>
+
+            <div class="hero__goal">
+              <span>目标 <b id="goalAmount">¥0.00</b></span>
+              <span class="hero__goal-sep">·</span>
+              <span>已完成 <b id="percentText">0.00%</b></span>
+            </div>
+
+            <div class="progress" aria-hidden="true">
+              <div class="progress__track" id="progressTrack">
+                <div class="progress__fill" id="progressFill"></div>
+                <div class="progress__coin" id="progressCoin">¥</div>
+              </div>
+              <div class="progress__labels">
+                <span>已工作 <b id="elapsedText">00:00:00</b></span>
+                <span>剩余 <b id="remainingText">00:00:00</b></span>
+              </div>
+            </div>
+
+            <div class="hero__times">
+              <div class="hero__time"><span>上班</span><b id="startText">--:--</b></div>
+              <div class="hero__time"><span>下班</span><b id="endText">--:--</b></div>
+              <div class="hero__time"><span>午休</span><b id="breakText">无</b></div>
+            </div>
+
+            <div class="notice notice--error is-hidden" id="errorBox"></div>
+            <div class="notice notice--warn is-hidden" id="warningBox"></div>
+          </section>
+
+          <section class="metrics" aria-label="收入速率">
+            <div class="card metric"><div class="metric__label">每小时</div><div class="metric__value" id="rateHour">¥0.0000</div></div>
+            <div class="card metric"><div class="metric__label">每分钟</div><div class="metric__value" id="rateMinute">¥0.0000</div></div>
+            <div class="card metric"><div class="metric__label">每秒</div><div class="metric__value" id="rateSecond">¥0.000000</div></div>
+            <div class="card metric"><div class="metric__label">有效时长</div><div class="metric__value" id="totalDuration">00:00:00</div></div>
+          </section>
+
+          <section class="card quote">
+            <svg class="icon quote__icon"><use href="#i-coin" /></svg>
+            <p id="quoteText">你的时间正在变成钱。</p>
+            <button class="icon-btn icon-btn--sm" id="btnRefreshQuote" type="button" aria-label="换一句激励语">
+              <svg class="icon"><use href="#i-refresh" /></svg>
+            </button>
+          </section>
+
+          <button class="btn btn--primary btn--block" id="btnEditPlan" type="button">
+            <svg class="icon"><use href="#i-edit" /></svg>
+            <span>编辑今日计划</span>
+          </button>
+          <p class="plan-hint" id="planHint">保存计划后立即按真实时间实时结算</p>
+        </section>
+
+        <!-- ==================== 概览 ==================== -->
+        <section class="view" id="view-overview" aria-label="今日数据概览" hidden>
+          <header class="view-header">
+            <h1>数据概览</h1>
+            <p>最近记录都保存在这台设备上</p>
+          </header>
+
+          <section class="card summary">
+            <div class="summary__label">近期计划累计工资</div>
+            <div class="summary__value" id="summaryTotal">¥0.00</div>
+            <div class="summary__sub" id="summaryDays">共 0 天记录</div>
+          </section>
+
+          <section class="section-block">
+            <h2 class="section-title">最近 7 天</h2>
+            <div class="card list" id="historyList"></div>
+          </section>
+
+          <section class="section-block">
+            <h2 class="section-title">数据管理</h2>
+            <div class="card list">
+              <button class="list__row" id="btnExport" type="button">
+                <svg class="icon"><use href="#i-download" /></svg>
+                <span>导出备份文件</span>
+                <svg class="icon list__chevron"><use href="#i-chevron" /></svg>
+              </button>
+              <button class="list__row" id="btnImport" type="button">
+                <svg class="icon"><use href="#i-upload" /></svg>
+                <span>从备份恢复</span>
+                <svg class="icon list__chevron"><use href="#i-chevron" /></svg>
+              </button>
+            </div>
+            <input type="file" id="fileImport" accept="application/json,.json" class="visually-hidden" />
+          </section>
+        </section>
+
+        <!-- ==================== 设置 ==================== -->
+        <section class="view" id="view-settings" aria-label="设置与说明" hidden>
+          <header class="view-header">
+            <h1>设置与说明</h1>
+            <p>所有数据只存在本机，不上传任何服务器</p>
+          </header>
+
+          <section class="section-block">
+            <h2 class="section-title">今日计划</h2>
+            <div class="card list">
+              <button class="list__row" id="btnOpenPlanFromSettings" type="button">
+                <svg class="icon"><use href="#i-edit" /></svg>
+                <span>修改工资与上下班时间</span>
+                <svg class="icon list__chevron"><use href="#i-chevron" /></svg>
+              </button>
+              <div class="list__row list__row--static">
+                <svg class="icon"><use href="#i-clock" /></svg>
+                <span>当前计划</span>
+                <b class="list__value" id="settingsPlanSummary">—</b>
+              </div>
+            </div>
+          </section>
+
+          <section class="section-block">
+            <h2 class="section-title">外观</h2>
+            <div class="card list">
+              <div class="list__row list__row--static">
+                <svg class="icon"><use href="#i-sun" /></svg>
+                <span>主题</span>
+              </div>
+              <div class="segmented" id="themeSegmented" role="group" aria-label="主题模式">
+                <button type="button" data-theme-value="light">浅色</button>
+                <button type="button" data-theme-value="dark">深色</button>
+                <button type="button" data-theme-value="auto">跟随系统</button>
+              </div>
+              <div class="list__row list__row--switch">
+                <svg class="icon"><use href="#i-coin" /></svg>
+                <span>动画效果</span>
+                <button class="switch" id="animSwitch" type="button" role="switch" aria-checked="true"><span></span></button>
+              </div>
+            </div>
+          </section>
+
+          <section class="section-block">
+            <h2 class="section-title">常用默认值</h2>
+            <div class="card list">
+              <div class="list__row list__row--static">
+                <svg class="icon"><use href="#i-sliders" /></svg>
+                <span>新的一天自动沿用</span>
+                <b class="list__value" id="defaultsSummary">—</b>
+              </div>
+              <button class="list__row" id="btnEditDefaults" type="button">
+                <svg class="icon"><use href="#i-edit" /></svg>
+                <span>修改默认计划</span>
+                <svg class="icon list__chevron"><use href="#i-chevron" /></svg>
+              </button>
+            </div>
+          </section>
+
+          <section class="section-block">
+            <h2 class="section-title">关于</h2>
+            <div class="card about">
+              <p><b>打工人现金流</b> 按真实时间把今日工资摊到每一毫秒。金额永远是「当前时刻重新算出来的」，不是定时累加，因此锁屏、刷新、重开或切后台后都会自动校准。</p>
+              <p class="about__formula">今日工资 = 设定工资 × 已完成有效工作毫秒 ÷ 有效工作总毫秒</p>
+              <p>午休不计薪；下班时间早于上班时间时自动按「次日下班」处理。完全离线可用，无账号、无服务器、无第三方组件。</p>
+            </div>
+          </section>
+
+          <section class="section-block">
+            <h2 class="section-title">危险操作</h2>
+            <div class="card list">
+              <button class="list__row list__row--danger" id="btnClearAll" type="button">
+                <svg class="icon"><use href="#i-trash" /></svg>
+                <span>清空所有本地数据</span>
+                <svg class="icon list__chevron"><use href="#i-chevron" /></svg>
+              </button>
+            </div>
+          </section>
+
+          <p class="version">v1.0.0 · 打工人现金流</p>
+        </section>
+      </main>
+
+      <nav class="tabbar" aria-label="主导航">
+        <button class="tab is-active" type="button" data-view="home" aria-current="page">
+          <svg class="icon"><use href="#i-home" /></svg><span>今日</span>
+        </button>
+        <button class="tab" type="button" data-view="overview">
+          <svg class="icon"><use href="#i-chart" /></svg><span>概览</span>
+        </button>
+        <button class="tab" type="button" data-view="settings">
+          <svg class="icon"><use href="#i-sliders" /></svg><span>设置</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- ==================== 计划编辑面板 ==================== -->
+    <div class="backdrop" id="planBackdrop" hidden></div>
+    <section class="sheet" id="planSheet" role="dialog" aria-modal="true" aria-labelledby="planTitle" hidden>
+      <div class="sheet__handle"></div>
+      <header class="sheet__header">
+        <button class="sheet__text-btn" id="btnPlanCancel" type="button">取消</button>
+        <h2 id="planTitle">今日计划</h2>
+        <button class="sheet__text-btn sheet__text-btn--strong" id="btnPlanSave" type="button">保存</button>
+      </header>
+      <div class="sheet__body">
+        <p class="sheet__date" id="sheetDate">—</p>
+
+        <div class="field">
+          <label for="fSalary">今日工资（元）</label>
+          <div class="input-prefix">
+            <span id="currencyPrefix">¥</span>
+            <input id="fSalary" type="number" inputmode="decimal" step="0.01" min="0.01" placeholder="300" />
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="fStart">上班时间</label>
+            <input id="fStart" type="time" step="60" />
+          </div>
+          <div class="field">
+            <label for="fEnd">下班时间</label>
+            <input id="fEnd" type="time" step="60" />
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="fBreakMinutes">午休时长（分钟）</label>
+            <input id="fBreakMinutes" type="number" inputmode="numeric" step="1" min="0" max="1440" placeholder="0" />
+          </div>
+          <div class="field">
+            <label for="fBreakStart">午休开始</label>
+            <input id="fBreakStart" type="time" step="60" />
+          </div>
+        </div>
+
+        <div class="preview" id="planPreview"></div>
+
+        <div class="sheet__actions">
+          <button class="btn btn--primary btn--block" id="btnSaveToday" type="button">保存今日计划</button>
+          <div class="btn-row">
+            <button class="btn btn--ghost" id="btnSaveDefault" type="button">保存为默认值</button>
+            <button class="btn btn--ghost" id="btnRestoreDefault" type="button">恢复默认设置</button>
+          </div>
+        </div>
+        <p class="sheet__note" id="sheetNote">保存后立即按真实时间重新结算。工作已经开始时，修改会弹出二次确认。</p>
+      </div>
+    </section>
+
+    <!-- ==================== 通用确认框 ==================== -->
+    <div class="dialog-backdrop" id="confirmBackdrop" hidden></div>
+    <div class="dialog" id="confirmDialog" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" hidden>
+      <h3 id="confirmTitle">确认修改</h3>
+      <p id="confirmBody">确定吗？</p>
+      <div class="dialog__actions">
+        <button type="button" id="confirmCancel">取消</button>
+        <button type="button" id="confirmOk" class="dialog__ok">确认</button>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <div class="fx-layer" id="fxLayer" aria-hidden="true"></div>
+    <div class="update-bar is-hidden" id="updateBar">
+      <span>有新版本可用</span>
+      <button type="button" id="btnApplyUpdate">刷新</button>
+    </div>
+
+    <script type="module" src="./js/app.js"></script>
+  </body>
+</html>
