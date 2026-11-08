@@ -4,7 +4,7 @@
 
 一个纯前端、零依赖、可离线使用的实时工资可视化 PWA。打开手机就能看到今日工资按毫秒持续增长；锁屏、切后台、刷新或重新打开后，一律按真实时间重新校准，绝不丢进度。
 
-**在线访问**：https://la88cy88.github.io/cashfolw/ （iPhone 用 Safari 打开，可添加到主屏幕）
+**在线访问**：https://la88cy88.github.io/cashflow/ （iPhone 用 Safari 打开，可添加到主屏幕）
 
 ---
 
@@ -186,8 +186,8 @@ git push origin main
 
 ## 部署地址
 
-- GitHub 仓库：https://github.com/la88cy88/cashfolw
-- GitHub Pages：https://la88cy88.github.io/cashfolw/
+- GitHub 仓库：https://github.com/la88cy88/cashflow
+- GitHub Pages：https://la88cy88.github.io/cashflow/
 
 ---
 
